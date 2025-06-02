@@ -1,0 +1,9 @@
+{
+    "name": "vintorezz-z/backend-php-learning",
+    "autoload": {
+        "psr-4": {
+            "VintorezzZ\\BackendPhpLearning\\": "src/"
+        }
+    },
+    "require": {}
+}

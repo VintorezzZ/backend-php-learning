@@ -1,4 +1,9 @@
 ﻿<?php
+
+require_once 'vendor\autoload.php';
+
+use VintorezzZ\BackendPhpLearning\UI\HTTP\HttpApplication;
+
 header('Content-Type: application/json');
 
 ini_set('display_errors', 1);
