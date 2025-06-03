@@ -1,4 +1,11 @@
-﻿<?php
+<?php
+
+namespace VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book;
+
+use PDO;
+use PDOException;
+use VintorezzZ\BackendPhpLearning\Domain\Book\Repository\IBookRepository;
+use VintorezzZ\BackendPhpLearning\Domain\Book\Entity\Book;
 
 class MySqlBookRepository implements IBookRepository
 {
@@ -25,27 +32,35 @@ class MySqlBookRepository implements IBookRepository
         return $books;
     }
 
-    public function save(Book $book): void
+    public function save(Book $book): bool
     {
         // TODO: Implement save() method.
+        return false;
     }
 
-    public function saveAll(array $books): void
+    public function saveAll(array $books): bool
     {
-        $pdo = $this->getConnection();
-        $this->createBooksTableIfNotExists($pdo);
+        try {
+            $pdo = $this->getConnection();
+            $this->createBooksTableIfNotExists($pdo);
 
-        
-        $sql = 'INSERT INTO books (title, author) VALUES (?, ?)';
-        $query = $pdo->prepare($sql);
+            $sql = 'INSERT INTO books (title, author) VALUES (?, ?)';
+            $query = $pdo->prepare($sql);
 
-        foreach ($books as $book) {
-            if (!isset($book['title']) || !isset($book['author']))
-                continue;
+            foreach ($books as $book) {
+                if (!isset($book['title']) || !isset($book['author']))
+                    continue;
 
-            $title = trim($book['title']);
-            $author = trim($book['author']);
-            $query->execute([$title, $author]);
+                $title = trim($book['title']);
+                $author = trim($book['author']);
+                $query->execute([$title, $author]);
+            }
+
+            return true;
+        }
+        catch (PDOException $e) {
+            echo $e->getMessage();
+            return false;
         }
     }
 

@@ -1,6 +1,8 @@
-﻿<?php
+<?php
 
-use IBookRepository;
+namespace VintorezzZ\BackendPhpLearning\Application\Book;
+
+use VintorezzZ\BackendPhpLearning\Domain\Book\Repository\IBookRepository;
 
 class GetBooksListUseCase
 {

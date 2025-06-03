@@ -1,4 +1,14 @@
-﻿<?php
+<?php
+
+namespace VintorezzZ\BackendPhpLearning\UI\HTTP;
+
+use VintorezzZ\BackendPhpLearning\Application\Book\GetBooksListUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
+use VintorezzZ\BackendPhpLearning\Domain\Book\Entity\Book;
+use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book\MySqlBookRepository;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\GetBooksController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\SaveBooksController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\DTO\BookDTOFactory;
 
 class HttpApplication
 {
@@ -10,9 +20,7 @@ class HttpApplication
         '127.0.0.1',
     ];
 
-    private GetBooksController $getBooksController;
-
-    public function runRequest(string $input, array $server): void
+    public function runRequest(string $input, array $server): string
     {
         // Проверяем, является ли отправитель запроса валидным
         if (isset($server['HTTP_ORIGIN'])) {
@@ -27,7 +35,7 @@ class HttpApplication
                 // header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
                 if ($server['REQUEST_METHOD'] === 'OPTIONS') {
-                    exit;
+                    return '';
                 }
             }
         }
@@ -40,23 +48,22 @@ class HttpApplication
         if (strpos($path, '/getBooks')) {
             $mySqlBookRepository = new MySqlBookRepository;
             $getBookListUseCase = new GetBooksListUseCase($mySqlBookRepository);
-            $getBooksController = new GetBooksController($getBookListUseCase);
-            $getBooksController->create();
-            exit;
+            $bookDTOFactory = new BookDTOFactory();
+            $getBooksController = new GetBooksController($getBookListUseCase, $bookDTOFactory);
+            $books = $getBooksController->create();
+            return json_encode($books);
         }
 
         if (strpos($path, '/saveBooks')) {
             $mySqlBookRepository = new MySqlBookRepository;
-            $saveBooksUseCase = new SaveBooksUseCase($mySqlBookRepository);
+            $saveBooksUseCase = new SaveBooksListUseCase($mySqlBookRepository);
             $saveBooksController = new SaveBooksController($saveBooksUseCase);
-            
-            $saveBooksController->create($input);
-            exit;
+            return $saveBooksController->create($input);
         }
 
         // Если ни одно условие не сработало — вернуть ошибку
         http_response_code(404);
-        echo json_encode([
+        return json_encode([
             'status' => 'error',
             'message' => "Маршрут не найден: $path"
         ]);

@@ -1,5 +1,6 @@
 <?php
 
+namespace VintorezzZ\BackendPhpLearning\Domain\Book\Entity;
 
 class Book
 {
@@ -13,14 +14,4 @@ class Book
         $this->author = $author;
         $this->id = $id;
     }
-
-    // тут быть не должно.
-//    public function toArray(): array
-//    {
-//        return [
-//            'id' => $this->id,
-//            'title' => $this->title,
-//            'author' => $this->author,
-//        ];
-//    }
 }
