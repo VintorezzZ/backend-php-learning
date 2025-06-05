@@ -12,5 +12,6 @@ interface IUserRepository
     public function update(User $user): bool;
     public function exists(string $email): ?User;
     public function createAccessToken(string $token, int $userId): void;
+    public function deleteAccessToken(string $token): void;
 
 }

@@ -4,11 +4,14 @@ namespace VintorezzZ\BackendPhpLearning\Infrastructure\PHP;
 
 use Ramsey\Uuid\Uuid;
 use VintorezzZ\BackendPhpLearning\Application\User\AuthorizeUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\CheckUserAuthorizedUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\GetUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\LogoutUserUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\RegisterUserUseCase;
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\IAuthorization;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
+use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 
 class PHPUserAuthorization implements IAuthorization
 {
@@ -21,16 +24,22 @@ class PHPUserAuthorization implements IAuthorization
     private GetUserUseCase $getUserUseCase;
     private RegisterUserUseCase $registerUserUseCase;
     private AuthorizeUserUseCase $authorizeUserUseCase;
+    private CheckUserAuthorizedUseCase $checkUserSessionUseCase;
+    private LogoutUserUseCase $logoutUserUseCase;
 
-    public function __construct(IUserRepository $userRepository,
-                                GetUserUseCase $getUserUseCase,
-                                RegisterUserUseCase $registerUserUseCase,
-                                AuthorizeUserUseCase $authorizeUserUseCase)
+    public function __construct(IUserRepository            $userRepository,
+                                GetUserUseCase             $getUserUseCase,
+                                RegisterUserUseCase        $registerUserUseCase,
+                                AuthorizeUserUseCase       $authorizeUserUseCase,
+                                CheckUserAuthorizedUseCase $getUserSessionUseCase,
+                                LogoutuserUseCase          $logoutUserUseCase)
     {
         $this->userRepository = $userRepository;
         $this->getUserUseCase = $getUserUseCase;
         $this->registerUserUseCase = $registerUserUseCase;
         $this->authorizeUserUseCase = $authorizeUserUseCase;
+        $this->checkUserSessionUseCase = $getUserSessionUseCase;
+        $this->logoutUserUseCase = $logoutUserUseCase;
     }
 
     public function login(string $username, string $password): array
@@ -64,7 +73,7 @@ class PHPUserAuthorization implements IAuthorization
             return $result;
         }
 
-        $token = $this->authorizeUserUseCase->authorize($user);
+        $token = $this->authorizeUserUseCase->execute($user);
 
         $result['token'] = $token;
         $result['message'] = 'Login successful';
@@ -73,9 +82,21 @@ class PHPUserAuthorization implements IAuthorization
         return $result;
     }
 
-    public function logout(string $sessionId): bool
+    public function logout(): array
     {
-        // TODO: Implement logout() method.
+        $result = [];
+        $result['error'] = true;
+
+        $logoutResult = $this->logoutUserUseCase->execute();
+
+        if ($logoutResult === false) {
+            $result['message'] = "Failed logout";
+            return $result;
+        }
+
+        $result['message'] = "Logout success";
+        $result['error'] = false;
+        return $result;
     }
 
     public function register(string $email, string $username, string $password): array
@@ -128,9 +149,26 @@ class PHPUserAuthorization implements IAuthorization
         // TODO: Implement getUser() method.
     }
 
-    public function deleteUser(int $userId, string $password): bool
+    public function deleteUser(int $userId, string $password): array
     {
         // TODO: Implement deleteUser() method.
+    }
+
+    public function checkSession(Request $request): array
+    {
+        $result = [];
+        $result['error'] = true;
+
+        $checkResult = $this->checkUserSessionUseCase->execute();
+
+        if ($checkResult === false){
+            $result['message'] = "Session not found";
+            return $result;
+        }
+
+        $result['message'] = "Session found";
+        $result['error'] = false;
+        return $result;
     }
 
     private function validateUserName(string $username): array

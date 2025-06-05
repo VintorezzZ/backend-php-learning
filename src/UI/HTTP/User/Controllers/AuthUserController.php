@@ -40,12 +40,18 @@ class AuthUserController
 
     public function logout(Request $request): string
     {
-// если фронт отправил токен, то его нужно удалить из бд.
-// фронт тоже его удаляет
+        $result = $this->authorization->logout();
+        return json_encode(['result' => $result]);
     }
 
     public function deleteUser(Request $request): string
     {
 
+    }
+
+    public function checkSession(Request $request): string
+    {
+        $result = $this->authorization->checkSession($request);
+        return json_encode(['result' => $result]);
     }
 }

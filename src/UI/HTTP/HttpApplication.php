@@ -4,8 +4,10 @@ namespace VintorezzZ\BackendPhpLearning\UI\HTTP;
 
 use VintorezzZ\BackendPhpLearning\Application\Book\GetBooksListUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\CheckUserAuthorizedUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\AuthorizeUserUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\GetUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\LogoutUserUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\RegisterUserUseCase;
 use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book\MySqlBookRepository;
@@ -18,6 +20,7 @@ use VintorezzZ\BackendPhpLearning\UI\HTTP\User\Controllers\AuthUserController;
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Credentials: true');
+session_start();
 
 class HttpApplication
 {
@@ -92,10 +95,15 @@ class HttpApplication
             return $authUserController->deleteUser($request);
         }
 
+        if (str_contains($path, 'auth/checkSession')) {
+            $authUserController = $this->createAuthUserController();
+            return $authUserController->checkSession($request);
+        }
+
         // Если ни одно условие не сработало — вернуть ошибку
         http_response_code(404);
         return json_encode([
-            'status' => 'error',
+            'error' => 1,
             'message' => "Маршрут не найден: $path"
         ]);
     }
@@ -105,8 +113,18 @@ class HttpApplication
         $mySqlUserRepository = new MySqlUserRepository();
         $getUserUseCase = new GetUserUseCase($mySqlUserRepository);
         $registerUserUseCase = new RegisterUserUseCase($mySqlUserRepository);
-        $authorizeUserUseCase = new AuthorizeUserUseCase($mySqlUserRepository);
-        $phpUserAuthorization = new PhpUserAuthorization($mySqlUserRepository, $getUserUseCase, $registerUserUseCase, $authorizeUserUseCase);
+        $setUserSessionUseCase = new AuthorizeUserUseCase($mySqlUserRepository);
+        $checkUserSessionUseCase = new CheckUserAuthorizedUseCase($mySqlUserRepository);
+        $logoutUserUseCase = new LogoutUserUseCase($mySqlUserRepository);
+        $phpUserAuthorization = new PhpUserAuthorization
+        (
+            $mySqlUserRepository,
+            $getUserUseCase,
+            $registerUserUseCase,
+            $setUserSessionUseCase,
+            $checkUserSessionUseCase,
+            $logoutUserUseCase
+        );
         $authUserController = new AuthUserController($phpUserAuthorization);
         return $authUserController;
     }

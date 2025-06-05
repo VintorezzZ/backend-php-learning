@@ -9,15 +9,6 @@ use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\BaseMySqlRepository;
 
 class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
 {
-    public function createAccessToken(string $token, int $userId): void
-    {
-        $pdo = $this->getConnection();
-
-        $sql = 'INSERT INTO access_tokens (token, expired, user_id) VALUES (?, ?, ?)';
-        $query = $pdo->prepare($sql);
-        $query->execute([$token, 0, $userId]);
-    }
-
     public function get(string $username): ?User
     {
         $pdo = $this->getConnection();
@@ -75,6 +66,24 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
         }
 
         return new User($result['id'], $result['uId'], $result['username'], $result['email']);
+    }
+
+    public function createAccessToken(string $token, int $userId): void
+    {
+        $pdo = $this->getConnection();
+
+        $sql = 'INSERT INTO access_tokens (token, expired, user_id) VALUES (?, ?, ?)';
+        $query = $pdo->prepare($sql);
+        $query->execute([$token, 0, $userId]);
+    }
+
+    public function deleteAccessToken(string $token): void
+    {
+        $pdo = $this->getConnection();
+
+        $sql = 'DELETE FROM access_tokens WHERE token = :token';
+        $query = $pdo->prepare($sql);
+        $query->execute([$token]);
     }
 
     private function createUsersTableIfNotExists(PDO $pdo): void
