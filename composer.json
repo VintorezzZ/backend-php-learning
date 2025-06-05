@@ -5,5 +5,13 @@
             "VintorezzZ\\BackendPhpLearning\\": "src/"
         }
     },
-    "require": {}
+    "require": {
+        "ramsey/uuid": "4.x"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/ramsey/uuid.git"
+        }
+    ]
 }

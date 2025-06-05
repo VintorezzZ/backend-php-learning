@@ -6,15 +6,10 @@ use PDO;
 use PDOException;
 use VintorezzZ\BackendPhpLearning\Domain\Book\Repository\IBookRepository;
 use VintorezzZ\BackendPhpLearning\Domain\Book\Entity\Book;
+use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\BaseMySqlRepository;
 
-class MySqlBookRepository implements IBookRepository
+class MySqlBookRepository extends BaseMySqlRepository implements IBookRepository
 {
-    private string $host = 'localhost';
-    private string $dbname = 'php-website';
-    private string $user = 'root';
-    private string $pass = 'root';
-    private string $port = '3306';
-
     public function getAll(): array
     {
         $pdo = $this->getConnection();
@@ -57,23 +52,10 @@ class MySqlBookRepository implements IBookRepository
             }
 
             return true;
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             echo $e->getMessage();
             return false;
         }
-    }
-
-    private function getConnection(): PDO
-    {
-        try {
-            $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;port=$this->port;charset=utf8", $this->user, $this->pass);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Ошибка подключения к базе: " . $e->getMessage());
-        }
-
-        return $pdo;
     }
 
     /**

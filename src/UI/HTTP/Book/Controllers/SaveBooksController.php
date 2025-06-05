@@ -3,6 +3,7 @@
 namespace VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers;
 
 use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
+use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 
 class SaveBooksController
 {
@@ -13,9 +14,9 @@ class SaveBooksController
         $this->saveBooksUseCase = $useCase;
     }
 
-    public function create(string $inputJSON): string
+    public function create(Request $request): string
     {
-        $input = json_decode($inputJSON, true);
+        $input = json_decode($request->content, true);
 
         if (!isset($input['books']) || !is_array($input['books'])) {
             return json_encode([

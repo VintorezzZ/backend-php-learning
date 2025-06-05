@@ -4,11 +4,20 @@ namespace VintorezzZ\BackendPhpLearning\UI\HTTP;
 
 use VintorezzZ\BackendPhpLearning\Application\Book\GetBooksListUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
-use VintorezzZ\BackendPhpLearning\Domain\Book\Entity\Book;
+use VintorezzZ\BackendPhpLearning\Application\User\AuthorizeUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\GetUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\RegisterUserUseCase;
+use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book\MySqlBookRepository;
+use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User\MySqlUserRepository;
+use VintorezzZ\BackendPhpLearning\Infrastructure\PHP\PHPUserAuthorization;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\GetBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\SaveBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\DTO\BookDTOFactory;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\User\Controllers\AuthUserController;
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Credentials: true');
 
 class HttpApplication
 {
@@ -22,6 +31,8 @@ class HttpApplication
 
     public function runRequest(string $input, array $server): string
     {
+        $request = new Request($_SERVER['REQUEST_METHOD'], getallheaders(), $input, $_GET);
+
         // Проверяем, является ли отправитель запроса валидным
         if (isset($server['HTTP_ORIGIN'])) {
             $originHeader = $server['HTTP_ORIGIN'];
@@ -58,7 +69,27 @@ class HttpApplication
             $mySqlBookRepository = new MySqlBookRepository;
             $saveBooksUseCase = new SaveBooksListUseCase($mySqlBookRepository);
             $saveBooksController = new SaveBooksController($saveBooksUseCase);
-            return $saveBooksController->create($input);
+            return $saveBooksController->create($request);
+        }
+
+        if (str_contains($path, 'auth/login')) {
+            $authUserController = $this->createAuthUserController();
+            return $authUserController->login($request);
+        }
+
+        if (str_contains($path, 'auth/register')) {
+            $authUserController = $this->createAuthUserController();
+            return $authUserController->register($request);
+        }
+
+        if (str_contains($path, 'auth/logout')) {
+            $authUserController = $this->createAuthUserController();
+            return $authUserController->logout($request);
+        }
+
+        if (str_contains($path, 'auth/deleteUser')) {
+            $authUserController = $this->createAuthUserController();
+            return $authUserController->deleteUser($request);
         }
 
         // Если ни одно условие не сработало — вернуть ошибку
@@ -67,5 +98,16 @@ class HttpApplication
             'status' => 'error',
             'message' => "Маршрут не найден: $path"
         ]);
+    }
+
+    private function createAuthUserController(): AuthUserController
+    {
+        $mySqlUserRepository = new MySqlUserRepository();
+        $getUserUseCase = new GetUserUseCase($mySqlUserRepository);
+        $registerUserUseCase = new RegisterUserUseCase($mySqlUserRepository);
+        $authorizeUserUseCase = new AuthorizeUserUseCase($mySqlUserRepository);
+        $phpUserAuthorization = new PhpUserAuthorization($mySqlUserRepository, $getUserUseCase, $registerUserUseCase, $authorizeUserUseCase);
+        $authUserController = new AuthUserController($phpUserAuthorization);
+        return $authUserController;
     }
 }
