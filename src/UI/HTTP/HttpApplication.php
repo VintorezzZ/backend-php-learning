@@ -88,7 +88,7 @@ class HttpApplication
 
         if (str_contains($path, 'auth/logout')) {
             $authController = $this->createAuthUserController();
-            return $authController->logout($request);
+            return $authController->logout();
         }
 
         if (str_contains($path, 'auth/delete')) {
@@ -98,15 +98,17 @@ class HttpApplication
 
         if (str_contains($path, 'auth/checkSession')) {
             $authController = $this->createAuthUserController();
-            return $authController->checkSession($request);
+            return $authController->checkSession();
         }
 
         // Если ни одно условие не сработало — вернуть ошибку
         http_response_code(404);
-        return json_encode([
-            'error' => 1,
-            'message' => "Маршрут не найден: $path"
-        ]);
+
+        $response = [];
+        $response['error'] = 1;
+        $response['message'] = "Route Not Found: $path";
+
+        return json_encode(['result' => $response]);
     }
 
     private function createAuthUserController(): AuthController
