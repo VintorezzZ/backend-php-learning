@@ -18,25 +18,19 @@ class SaveBooksController
     {
         $input = json_decode($request->content, true);
 
-        if (!isset($input['books']) || !is_array($input['books'])) {
+        if (!isset($input['data']) || !is_array($input['data'])) {
             return json_encode([
                 'status' => 'error',
                 'message' => 'Некорректные данные']);
         }
 
-        $books = $input['books'];
-        $result = $this->saveBooksUseCase->execute($books);
+        $books = $input['data'];
+        $resultSuccess = $this->saveBooksUseCase->execute($books);
 
-        if ($result === true) {
-            return json_encode([
-                'status' => 'success',
-                'message' => "Успешно сохранено"
-            ]);
-        } else {
-            return json_encode([
-                'status' => 'error',
-                'message' => "Ошибка сохранения"
-            ]);
-        }
+        $result = [];
+        $result['error'] = $resultSuccess ? 0 : 1;
+        $result['message'] = $resultSuccess ? "Успешно сохранено" : "Ошибка сохранения";
+
+        return json_encode(['result' => $result]);
     }
 }

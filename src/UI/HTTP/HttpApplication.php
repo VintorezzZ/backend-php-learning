@@ -2,24 +2,25 @@
 
 namespace VintorezzZ\BackendPhpLearning\UI\HTTP;
 
+use VintorezzZ\BackendPhpLearning\Application\Auth\AuthorizeUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\CheckAuthorizedUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\LogoutUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\RegisterUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\GetBooksListUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\CheckUserAuthorizedUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\AuthorizeUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\CheckUserExistsUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\DeleteUserUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\GetUserUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\LogoutUserUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\RegisterUserUseCase;
+use VintorezzZ\BackendPhpLearning\Domain\Auth\Entity\Authorization;
 use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book\MySqlBookRepository;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User\MySqlUserRepository;
-use VintorezzZ\BackendPhpLearning\Infrastructure\PHP\PHPUserAuthorization;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\GetBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\SaveBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\DTO\BookDTOFactory;
-use VintorezzZ\BackendPhpLearning\UI\HTTP\User\Controllers\AuthUserController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\User\Controllers\AuthController;
 
-header('Content-Type: application/json');
-header('Access-Control-Allow-Credentials: true');
+//header('Content-Type: application/json');
 session_start();
 
 class HttpApplication
@@ -44,9 +45,9 @@ class HttpApplication
 
             if (in_array($host, $this->allowedOrigins)) {
                 header("Access-Control-Allow-Origin: $originHeader");
-                // header('Access-Control-Allow-Credentials: true');
-                // header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-                // header('Access-Control-Allow-Headers: Content-Type, Authorization');
+                header('Access-Control-Allow-Credentials: true');
+                header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+                header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
                 if ($server['REQUEST_METHOD'] === 'OPTIONS') {
                     return '';
@@ -76,28 +77,28 @@ class HttpApplication
         }
 
         if (str_contains($path, 'auth/login')) {
-            $authUserController = $this->createAuthUserController();
-            return $authUserController->login($request);
+            $authController = $this->createAuthUserController();
+            return $authController->login($request);
         }
 
         if (str_contains($path, 'auth/register')) {
-            $authUserController = $this->createAuthUserController();
-            return $authUserController->register($request);
+            $authController = $this->createAuthUserController();
+            return $authController->register($request);
         }
 
         if (str_contains($path, 'auth/logout')) {
-            $authUserController = $this->createAuthUserController();
-            return $authUserController->logout($request);
+            $authController = $this->createAuthUserController();
+            return $authController->logout($request);
         }
 
-        if (str_contains($path, 'auth/deleteUser')) {
-            $authUserController = $this->createAuthUserController();
-            return $authUserController->deleteUser($request);
+        if (str_contains($path, 'auth/delete')) {
+            $authController = $this->createAuthUserController();
+            return $authController->deleteUser($request);
         }
 
         if (str_contains($path, 'auth/checkSession')) {
-            $authUserController = $this->createAuthUserController();
-            return $authUserController->checkSession($request);
+            $authController = $this->createAuthUserController();
+            return $authController->checkSession($request);
         }
 
         // Если ни одно условие не сработало — вернуть ошибку
@@ -108,24 +109,26 @@ class HttpApplication
         ]);
     }
 
-    private function createAuthUserController(): AuthUserController
+    private function createAuthUserController(): AuthController
     {
         $mySqlUserRepository = new MySqlUserRepository();
         $getUserUseCase = new GetUserUseCase($mySqlUserRepository);
-        $registerUserUseCase = new RegisterUserUseCase($mySqlUserRepository);
-        $setUserSessionUseCase = new AuthorizeUserUseCase($mySqlUserRepository);
-        $checkUserSessionUseCase = new CheckUserAuthorizedUseCase($mySqlUserRepository);
-        $logoutUserUseCase = new LogoutUserUseCase($mySqlUserRepository);
-        $phpUserAuthorization = new PhpUserAuthorization
+        $deleteUserUseCase = new DeleteUserUseCase($mySqlUserRepository);
+        $checkUserExistsUseCase = new CheckUserExistsUseCase($mySqlUserRepository);
+        $registerUseCase = new RegisterUseCase($mySqlUserRepository);
+        $authorizeUserUseCase = new AuthorizeUseCase($mySqlUserRepository);
+        $checkAuthorizedUseCase = new CheckAuthorizedUseCase($mySqlUserRepository);
+        $logoutUserUseCase = new LogoutUseCase($mySqlUserRepository);
+        $authorization = new Authorization
         (
-            $mySqlUserRepository,
             $getUserUseCase,
-            $registerUserUseCase,
-            $setUserSessionUseCase,
-            $checkUserSessionUseCase,
+            $deleteUserUseCase,
+            $checkUserExistsUseCase,
+            $registerUseCase,
+            $authorizeUserUseCase,
+            $checkAuthorizedUseCase,
             $logoutUserUseCase
         );
-        $authUserController = new AuthUserController($phpUserAuthorization);
-        return $authUserController;
+        return new AuthController($authorization);
     }
 }

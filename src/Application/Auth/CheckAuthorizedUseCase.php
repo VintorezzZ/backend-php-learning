@@ -1,11 +1,10 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Application\User;
+namespace VintorezzZ\BackendPhpLearning\Application\Auth;
 
-use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
 
-class GetUserUseCase
+class CheckAuthorizedUseCase
 {
     private IUserRepository $userRepository;
 
@@ -14,8 +13,12 @@ class GetUserUseCase
         $this->userRepository = $userRepository;
     }
 
-    public function execute(string $login): ?User
+    public function execute(): bool
     {
-        return $this->userRepository->get($login);
+        if (isset($_SESSION['login'])) {
+            return true;
+        }
+
+        return false;
     }
 }

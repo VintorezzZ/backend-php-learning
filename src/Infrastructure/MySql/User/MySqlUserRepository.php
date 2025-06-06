@@ -9,32 +9,32 @@ use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\BaseMySqlRepository;
 
 class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
 {
-    public function get(string $username): ?User
+    public function get(string $login): ?User
     {
         $pdo = $this->getConnection();
         $this->createUsersTableIfNotExists($pdo);
 
-        $sql = 'SELECT id, uId, username, email, password FROM users WHERE username = :username';
+        $sql = 'SELECT id, login, email, password FROM users WHERE login = :login';
         $query = $pdo->prepare($sql);
-        $query->execute(['username' => $username]);
+        $query->execute(['login' => $login]);
         $result = $query->fetch(PDO::FETCH_ASSOC);
 
         if (!$result) {
             return null;
         }
 
-        return new User($result['id'], $result['uId'], $result['username'], $result['email'], $result['password']);
+        return new User($result['id'], $result['login'], $result['email'], $result['password']);
     }
 
-    public function add(string $uId, string $email, string $username, string $password): bool
+    public function add(string $login, string $email, string $password): bool
     {
         $pdo = $this->getConnection();
         $this->createUsersTableIfNotExists($pdo);
 
-        $sql = 'INSERT INTO users (uId, email, username, password) VALUES (?, ?, ?, ?)';
+        $sql = 'INSERT INTO users (login, email, password) VALUES (?, ?, ?)';
         $query = $pdo->prepare($sql);
 
-        if (!$query->execute([$uId, $email, $username, $password])) {
+        if (!$query->execute([$login, $email, $password])) {
             return false;
         }
 
@@ -43,7 +43,17 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
 
     public function delete(User $user): bool
     {
-        // TODO: Implement delete() method.
+        $pdo = $this->getConnection();
+        $this->createUsersTableIfNotExists($pdo);
+
+        $sql = 'DELETE FROM users WHERE login = :login';
+        $query = $pdo->prepare($sql);
+
+        if (!$query->execute(['login' => $user->login])) {
+            return false;
+        }
+
+        return true;
     }
 
     public function update(User $user): bool
@@ -51,21 +61,21 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
         // TODO: Implement update() method.
     }
 
-    public function exists(string $email): ?User
+    public function exists(string $login): ?User
     {
         $pdo = $this->getConnection();
         $this->createUsersTableIfNotExists($pdo);
 
-        $sql = "SELECT id, uId, username, email FROM users WHERE email = :email";
+        $sql = "SELECT id, login, email, password FROM users WHERE login = :login";
         $query = $pdo->prepare($sql);
-        $query->execute(['email' => $email]);
+        $query->execute(['login' => $login]);
         $result = $query->fetch(PDO::FETCH_ASSOC);
 
         if (!$result) {
             return null;
         }
 
-        return new User($result['id'], $result['uId'], $result['username'], $result['email']);
+        return new User($result['id'], $result['login'], $result['email'], $result['password']);
     }
 
     public function createAccessToken(string $token, int $userId): void

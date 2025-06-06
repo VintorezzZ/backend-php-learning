@@ -1,11 +1,10 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Application\User;
+namespace VintorezzZ\BackendPhpLearning\Application\Auth;
 
-use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
 
-class LogoutUserUseCase
+class LogoutUseCase
 {
     private IUserRepository $userRepository;
 

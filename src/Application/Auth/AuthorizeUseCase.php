@@ -1,11 +1,11 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Application\User;
+namespace VintorezzZ\BackendPhpLearning\Application\Auth;
 
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
 
-class AuthorizeUserUseCase
+class AuthorizeUseCase
 {
     private IUserRepository $userRepository;
 
@@ -14,7 +14,7 @@ class AuthorizeUserUseCase
         $this->userRepository = $userRepository;
     }
 
-    public function execute(User $user): string
+    public function execute(int $id, string $login, string $password): string
     {
 /*        if (isset($_SERVER['HTTP_ORIGIN'])) {
             $origin = $_SERVER['HTTP_ORIGIN'];
@@ -35,10 +35,10 @@ class AuthorizeUserUseCase
 
         $bytes = random_bytes(5);
         $token = bin2hex($bytes);
-        //$this->userRepository->createAccessToken($token, $user->id);
+        $this->userRepository->createAccessToken($token, $id);
 
-        $_SESSION['login'] = $user->name;
-        $_SESSION['password'] = $user->password;
+        $_SESSION['login'] = $login;
+        $_SESSION['password'] = $password;
         $_SESSION['token'] = $token;
 
         return $token;
