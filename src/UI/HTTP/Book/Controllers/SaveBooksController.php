@@ -14,7 +14,7 @@ class SaveBooksController
         $this->saveBooksUseCase = $useCase;
     }
 
-    public function create(Request $request): string
+    public function execute(Request $request): string
     {
         $input = json_decode($request->content, true);
 

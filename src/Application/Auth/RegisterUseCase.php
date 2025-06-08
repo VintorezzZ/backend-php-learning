@@ -13,8 +13,8 @@ class RegisterUseCase
         $this->userRepository = $userRepository;
     }
 
-    public function execute(string $login, string $email, string $password): bool
+    public function execute(string $login, string $password): bool
     {
-        return $this->userRepository->add($login, $email, $password);
+        return $this->userRepository->addUser($login, $password);
     }
 }

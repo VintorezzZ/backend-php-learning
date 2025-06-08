@@ -1,6 +1,6 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\UI\HTTP\User\Controllers;
+namespace VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers;
 
 use VintorezzZ\BackendPhpLearning\Domain\Auth\Entity\Authorization;
 use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
@@ -30,12 +30,12 @@ class AuthController
         return json_encode(['result' => $result]);
     }
 
-    public function register(Request $request): string
+    public function register(Request $request): array
     {
         $input = json_decode($request->content, true);
         $input = $input["data"];
-        $result = $this->authorization->register($input['login'], $input['email'], $input['password']);
-        return json_encode(['result' => $result]);
+        $result = $this->authorization->register($input['login'], $input['password']);
+        return $result;
     }
 
     public function logout(): string

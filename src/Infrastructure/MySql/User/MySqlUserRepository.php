@@ -5,16 +5,17 @@ namespace VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User;
 use PDO;
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
+use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Entity\UserProfile;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\BaseMySqlRepository;
 
 class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
 {
-    public function get(string $login): ?User
+    public function getUserByLogin(string $login): ?User
     {
         $pdo = $this->getConnection();
         $this->createUsersTableIfNotExists($pdo);
 
-        $sql = 'SELECT id, login, email, password FROM users WHERE login = :login';
+        $sql = 'SELECT id, login, password FROM users WHERE login = :login';
         $query = $pdo->prepare($sql);
         $query->execute(['login' => $login]);
         $result = $query->fetch(PDO::FETCH_ASSOC);
@@ -23,50 +24,45 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
             return null;
         }
 
-        return new User($result['id'], $result['login'], $result['email'], $result['password']);
+        $user = new User($result['id'], $result['login'], $result['password']);
+        return $user;
     }
 
-    public function add(string $login, string $email, string $password): bool
+    public function addUser(string $login, string $password): bool
     {
         $pdo = $this->getConnection();
         $this->createUsersTableIfNotExists($pdo);
 
-        $sql = 'INSERT INTO users (login, email, password) VALUES (?, ?, ?)';
+        $sql = 'INSERT INTO users (login, password) VALUES (?, ?)';
         $query = $pdo->prepare($sql);
 
-        if (!$query->execute([$login, $email, $password])) {
+        if (!$query->execute([$login, $password])) {
             return false;
         }
 
         return true;
     }
 
-    public function delete(User $user): bool
+    public function deleteUser(int $id): bool
     {
         $pdo = $this->getConnection();
-        $this->createUsersTableIfNotExists($pdo);
 
-        $sql = 'DELETE FROM users WHERE login = :login';
+        $sql = 'DELETE FROM users WHERE id = :id';
         $query = $pdo->prepare($sql);
 
-        if (!$query->execute(['login' => $user->login])) {
+        if (!$query->execute(['id' => $id])) {
             return false;
         }
 
         return true;
     }
 
-    public function update(User $user): bool
-    {
-        // TODO: Implement update() method.
-    }
-
-    public function exists(string $login): ?User
+    public function existsUser(string $login): ?User
     {
         $pdo = $this->getConnection();
         $this->createUsersTableIfNotExists($pdo);
 
-        $sql = "SELECT id, login, email, password FROM users WHERE login = :login";
+        $sql = "SELECT id, login, password FROM users WHERE login = :login";
         $query = $pdo->prepare($sql);
         $query->execute(['login' => $login]);
         $result = $query->fetch(PDO::FETCH_ASSOC);
@@ -75,7 +71,7 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
             return null;
         }
 
-        return new User($result['id'], $result['login'], $result['email'], $result['password']);
+        return new User($result['id'], $result['login'], $result['password']);
     }
 
     public function createAccessToken(string $token, int $userId): void
@@ -105,13 +101,10 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
             $createTableSql = "
             CREATE TABLE users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                uId VARCHAR(255) NOT NULL,
-                username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                password VARCHAR(255) NOT NULL
+                login VARCHAR(50) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
         ";
-
             $pdo->exec($createTableSql);
         }
     }

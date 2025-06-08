@@ -8,17 +8,23 @@ use VintorezzZ\BackendPhpLearning\Application\Auth\LogoutUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Auth\RegisterUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\GetBooksListUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
+use VintorezzZ\BackendPhpLearning\Application\UserProfile\CreateUserProfileUseCase;
+use VintorezzZ\BackendPhpLearning\Application\UserProfile\GetUserProfileByUserIdUseCase;
+use VintorezzZ\BackendPhpLearning\Application\UserProfile\UpdateProfileEmailUseCase;
+use VintorezzZ\BackendPhpLearning\Application\UserProfile\UpdateProfileUsernameUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\CheckUserExistsUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\DeleteUserUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\GetUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\GetUserByLoginUseCase;
 use VintorezzZ\BackendPhpLearning\Domain\Auth\Entity\Authorization;
 use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book\MySqlBookRepository;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User\MySqlUserRepository;
+use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\UserProfile\MySqlUserProfileRepository;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\GetBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\SaveBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\DTO\BookDTOFactory;
-use VintorezzZ\BackendPhpLearning\UI\HTTP\User\Controllers\AuthController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\UserProfile\Controllers\UserProfileController;
 
 //header('Content-Type: application/json');
 session_start();
@@ -73,7 +79,7 @@ class HttpApplication
             $mySqlBookRepository = new MySqlBookRepository;
             $saveBooksUseCase = new SaveBooksListUseCase($mySqlBookRepository);
             $saveBooksController = new SaveBooksController($saveBooksUseCase);
-            return $saveBooksController->create($request);
+            return $saveBooksController->execute($request);
         }
 
         if (str_contains($path, 'auth/login')) {
@@ -82,8 +88,21 @@ class HttpApplication
         }
 
         if (str_contains($path, 'auth/register')) {
+            $profileController = $this->CreateUserProfileController();
+            $registerProfileDataValidationResult = $profileController->validateRegisterProfileData($request);
+
+            if ($registerProfileDataValidationResult['error'] !== 0)
+                return json_encode(['result' => $registerProfileDataValidationResult]);
+
             $authController = $this->createAuthUserController();
-            return $authController->register($request);
+            $authResult = $authController->register($request);
+
+            if ($authResult['error'] !== 0)
+                return json_encode(['result' => $authResult]);
+
+            $profileControllerResult = $profileController->createUserProfile($authResult['userId'], $request);
+
+            return $profileControllerResult;
         }
 
         if (str_contains($path, 'auth/logout')) {
@@ -101,6 +120,22 @@ class HttpApplication
             return $authController->checkSession();
         }
 
+        if (str_contains($path, 'profile/getProfile')) {
+            $profileController = $this->createUserProfileController();
+            return $profileController->getUserProfile();
+        }
+
+
+        if (str_contains($path, 'profile/updateUsername')) {
+            $profileController = $this->createUserProfileController();
+            return $profileController->updateProfileUsername($request);
+        }
+
+        if (str_contains($path, 'profile/updateEmail')) {
+            $profileController = $this->createUserProfileController();
+            return $profileController->updateProfileEmail($request);
+        }
+
         // Если ни одно условие не сработало — вернуть ошибку
         http_response_code(404);
 
@@ -114,7 +149,7 @@ class HttpApplication
     private function createAuthUserController(): AuthController
     {
         $mySqlUserRepository = new MySqlUserRepository();
-        $getUserUseCase = new GetUserUseCase($mySqlUserRepository);
+        $getUserUseCase = new GetUserByLoginUseCase($mySqlUserRepository);
         $deleteUserUseCase = new DeleteUserUseCase($mySqlUserRepository);
         $checkUserExistsUseCase = new CheckUserExistsUseCase($mySqlUserRepository);
         $registerUseCase = new RegisterUseCase($mySqlUserRepository);
@@ -132,5 +167,22 @@ class HttpApplication
             $logoutUserUseCase
         );
         return new AuthController($authorization);
+    }
+
+    public function CreateUserProfileController(): UserProfileController
+    {
+        $mysSqlUserProfileRepository = new MySqlUserProfileRepository;
+        $createUserProfileUseCase = new CreateUserProfileUseCase($mysSqlUserProfileRepository);
+        $getUserProfileUseCase = new GetUserProfileByUserIdUseCase($mysSqlUserProfileRepository);
+        $updateProfileUsernameUseCase = new UpdateProfileUsernameUseCase($mysSqlUserProfileRepository);
+        $updateProfileEmailUseCase = new UpdateProfileEmailUseCase($mysSqlUserProfileRepository);
+        $profileController = new  UserProfileController
+        (
+            $createUserProfileUseCase,
+            $getUserProfileUseCase,
+            $updateProfileUsernameUseCase,
+            $updateProfileEmailUseCase
+        );
+        return $profileController;
     }
 }

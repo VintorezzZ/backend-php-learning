@@ -16,6 +16,6 @@ class CheckUserExistsUseCase
 
     public function execute(string $login): ?User
     {
-        return $this->userRepository->exists($login);
+        return $this->userRepository->existsUser($login);
     }
 }

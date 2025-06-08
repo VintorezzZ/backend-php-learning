@@ -37,6 +37,7 @@ class AuthorizeUseCase
         $token = bin2hex($bytes);
         $this->userRepository->createAccessToken($token, $id);
 
+        $_SESSION['userId'] = $id;
         $_SESSION['login'] = $login;
         $_SESSION['password'] = $password;
         $_SESSION['token'] = $token;

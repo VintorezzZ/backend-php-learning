@@ -9,7 +9,7 @@ use VintorezzZ\BackendPhpLearning\Application\Auth\LogoutUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Auth\RegisterUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\CheckUserExistsUseCase;
 use VintorezzZ\BackendPhpLearning\Application\User\DeleteUserUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\GetUserUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\GetUserByLoginUseCase;
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 
 class Authorization
@@ -19,7 +19,7 @@ class Authorization
     private const int PASSWORD_CHARS_MIN_COUNT = 5;
     private const int PASSWORD_CHARS_MAX_COUNT = 40;
 
-    private GetUserUseCase $getUserUseCase;
+    private GetUserByLoginUseCase $getUserUseCase;
     private DeleteUserUseCase $deleteUserUseCase;
     private CheckUserExistsUseCase $checkUserExistsUseCase;
     private RegisterUseCase $registerUserUseCase;
@@ -27,7 +27,7 @@ class Authorization
     private CheckAuthorizedUseCase $checkUserSessionUseCase;
     private LogoutUseCase $logoutUserUseCase;
 
-    public function __construct(GetUserUseCase         $getUserUseCase,
+    public function __construct(GetUserByLoginUseCase  $getUserUseCase,
                                 DeleteUserUseCase      $deleteUserUseCase,
                                 CheckUserExistsUseCase $checkUserSessionUseCase,
                                 RegisterUseCase        $registerUserUseCase,
@@ -93,7 +93,7 @@ class Authorization
         return $result;
     }
 
-    public function register(string $login, string $email, string $password): array
+    public function register(string $login, string $password): array
     {
         $result = [];
         $result['error'] = 1;
@@ -105,13 +105,6 @@ class Authorization
             return $result;
         }
 
-        $emailValidationResult = $this->validateEmail($email);
-
-        if ($emailValidationResult['error']) {
-            $result['message'] = $emailValidationResult['message'];
-            return $result;
-        }
-
         if ($this->isUserExists($login)) {
             $result['message'] = 'User already exists';
             return $result;
@@ -119,17 +112,18 @@ class Authorization
 
         //$uId = $this->createUserId($login, $email);
 
-        $addUserResult = $this->addUser($login, $email, $password);
-
-        $user = $this->getUserUseCase->execute($login);
+        $addUserResult = $this->addUser($login, $password);
 
         if (!$addUserResult) {
             $result['message'] = "Error creating user";
             return $result;
         }
 
-        $this->authorizeUserUseCase->execute($user->id, $email, $password);
+        $user = $this->getUserUseCase->execute($login);
 
+        $this->authorizeUserUseCase->execute($user->id, $login, $password);
+
+        $result['userId'] = $user->id;
         $result['message'] = "User created";
         $result['error'] = 0;
         return $result;
@@ -157,7 +151,7 @@ class Authorization
             return $result;
         }
 
-        $deleteResult = $this->deleteUserUseCase->execute($user);
+        $deleteResult = $this->deleteUserUseCase->execute($user->id);
 
         if ($deleteResult === false) {
             $result['message'] = "Delete user failed";
@@ -198,7 +192,7 @@ class Authorization
         $result = [];
         $result['error'] = 1;
 
-        $usernameValidationResult = $this->validateUsername($login);
+        $usernameValidationResult = $this->validateLogin($login);
 
         if ($usernameValidationResult['error']) {
             $result['message'] = $usernameValidationResult['message'];
@@ -216,18 +210,18 @@ class Authorization
         return $result;
     }
 
-    private function validateUserName(string $username): array
+    private function validateLogin(string $login): array
     {
         $result = [];
         $result['error'] = 1;
 
-        if (strlen($username) < self::USERNAME_CHARS_MIN_COUNT) {
-            $result['message'] = 'Username is too short';
+        if (strlen($login) < self::USERNAME_CHARS_MIN_COUNT) {
+            $result['message'] = 'Login is too short';
             return $result;
         }
 
-        if (strlen($username) > self::USERNAME_CHARS_MAX_COUNT) {
-            $result['message'] = 'Username is too long';
+        if (strlen($login) > self::USERNAME_CHARS_MAX_COUNT) {
+            $result['message'] = 'Login is too long';
             return $result;
         }
 
@@ -254,28 +248,14 @@ class Authorization
         return $result;
     }
 
-    private function validateEmail(string $email): array
-    {
-        $result = [];
-        $result['error'] = 1;
-
-        if (!filter_var($email, FILTER_SANITIZE_EMAIL) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $result['message'] = 'Invalid email';
-            return $result;
-        }
-
-        $result['error'] = 0;
-        return $result;
-    }
-
     private function isUserExists(string $login): bool
     {
         return (bool)$this->checkUserExistsUseCase->execute($login);
     }
 
-    private function addUser(string $login, string $email, string $password): bool
+    private function addUser(string $login, string $password): bool
     {
-        return $this->registerUserUseCase->execute($login, $email, $password);
+        return $this->registerUserUseCase->execute($login, $password);
     }
 
     private function createUserId(string $email, string $username): string

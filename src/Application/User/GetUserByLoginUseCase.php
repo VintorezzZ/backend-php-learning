@@ -5,7 +5,7 @@ namespace VintorezzZ\BackendPhpLearning\Application\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
 
-class GetUserUseCase
+class GetUserByLoginUseCase
 {
     private IUserRepository $userRepository;
 
@@ -16,6 +16,6 @@ class GetUserUseCase
 
     public function execute(string $login): ?User
     {
-        return $this->userRepository->get($login);
+        return $this->userRepository->getUserByLogin($login);
     }
 }

@@ -14,8 +14,8 @@ class DeleteUserUseCase
         $this->userRepository = $userRepository;
     }
 
-    public function execute(User $user): bool
+    public function execute(int $id): bool
     {
-        return $this->userRepository->delete($user);
+        return $this->userRepository->deleteUser($id);
     }
 }
