@@ -2,7 +2,7 @@
 
 namespace VintorezzZ\BackendPhpLearning\Domain\User\Entity;
 
-use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Entity\UserProfile;
+use VintorezzZ\BackendPhpLearning\Domain\User\ValueObject\UserProfile;
 
 class User
 {

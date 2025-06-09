@@ -1,10 +1,10 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Application\UserProfile;
+namespace VintorezzZ\BackendPhpLearning\Application\User\UserProfile;
 
-use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Repository\IUserProfileRepository;
+use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserProfileRepository;
 
-class UpdateProfileEmailUseCase
+class UserProfileUpdateEmailUseCase
 {
     private IUserProfileRepository $userProfileRepository;
 

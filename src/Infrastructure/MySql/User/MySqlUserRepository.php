@@ -5,7 +5,6 @@ namespace VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User;
 use PDO;
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
-use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Entity\UserProfile;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\BaseMySqlRepository;
 
 class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository

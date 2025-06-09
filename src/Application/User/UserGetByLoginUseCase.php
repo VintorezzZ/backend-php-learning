@@ -5,7 +5,7 @@ namespace VintorezzZ\BackendPhpLearning\Application\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
 
-class GetUserByLoginUseCase
+class UserGetByLoginUseCase
 {
     private IUserRepository $userRepository;
 

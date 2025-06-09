@@ -1,10 +1,10 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Infrastructure\MySql\UserProfile;
+namespace VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User\UserProfile;
 
 use PDO;
-use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Entity\UserProfile;
-use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Repository\IUserProfileRepository;
+use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserProfileRepository;
+use VintorezzZ\BackendPhpLearning\Domain\User\ValueObject\UserProfile;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\BaseMySqlRepository;
 
 class MySqlUserProfileRepository extends BaseMySqlRepository implements IUserProfileRepository
@@ -29,7 +29,7 @@ class MySqlUserProfileRepository extends BaseMySqlRepository implements IUserPro
         $pdo = $this->getConnection();
         $this->createProfilesTableIfNotExists($pdo);
 
-        $sql = 'SELECT username, email FROM profiles WHERE user_id = :user_id';
+        $sql = 'SELECT user_id, username, email FROM profiles WHERE user_id = :user_id';
         $query = $pdo->prepare($sql);
         $query->execute(['user_id' => $userId]);
         $result = $query->fetch(PDO::FETCH_ASSOC);
@@ -38,7 +38,7 @@ class MySqlUserProfileRepository extends BaseMySqlRepository implements IUserPro
             return null;
         }
 
-        return new UserProfile($result['username'], $result['email']);
+        return new UserProfile($result['user_id'], $result['username'], $result['email']);
     }
 
     public function updateUsername(int $userId, string $username): bool

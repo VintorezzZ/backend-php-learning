@@ -2,29 +2,36 @@
 
 namespace VintorezzZ\BackendPhpLearning\UI\HTTP;
 
-use VintorezzZ\BackendPhpLearning\Application\Auth\AuthorizeUseCase;
-use VintorezzZ\BackendPhpLearning\Application\Auth\CheckAuthorizedUseCase;
-use VintorezzZ\BackendPhpLearning\Application\Auth\LogoutUseCase;
-use VintorezzZ\BackendPhpLearning\Application\Auth\RegisterUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\AuthAuthorizeUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\AuthCheckAuthorizedUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\AuthLogoutUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\AuthRegisterUseCase;
+use VintorezzZ\BackendPhpLearning\Application\Auth\UserDataValidator;
 use VintorezzZ\BackendPhpLearning\Application\Book\GetBooksListUseCase;
 use VintorezzZ\BackendPhpLearning\Application\Book\SaveBooksListUseCase;
-use VintorezzZ\BackendPhpLearning\Application\UserProfile\CreateUserProfileUseCase;
-use VintorezzZ\BackendPhpLearning\Application\UserProfile\GetUserProfileByUserIdUseCase;
-use VintorezzZ\BackendPhpLearning\Application\UserProfile\UpdateProfileEmailUseCase;
-use VintorezzZ\BackendPhpLearning\Application\UserProfile\UpdateProfileUsernameUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\CheckUserExistsUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\DeleteUserUseCase;
-use VintorezzZ\BackendPhpLearning\Application\User\GetUserByLoginUseCase;
-use VintorezzZ\BackendPhpLearning\Domain\Auth\Entity\Authorization;
+use VintorezzZ\BackendPhpLearning\Application\User\UserDeleteUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\UserExistsCheckUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\UserGetByLoginUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\UserProfile\UserProfileCreateUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\UserProfile\UserProfileGetByUserIdUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\UserProfile\UserProfileUpdateEmailUseCase;
+use VintorezzZ\BackendPhpLearning\Application\User\UserProfile\UserProfileUpdateUsernameUseCase;
 use VintorezzZ\BackendPhpLearning\Infrastructure\HTTP\Request;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\Book\MySqlBookRepository;
 use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User\MySqlUserRepository;
-use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\UserProfile\MySqlUserProfileRepository;
+use VintorezzZ\BackendPhpLearning\Infrastructure\MySql\User\UserProfile\MySqlUserProfileRepository;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthAuthorizeController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthCheckAuthorizedController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthDeleteUserController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthLogoutController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthRegisterController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\GetBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\Controllers\SaveBooksController;
 use VintorezzZ\BackendPhpLearning\UI\HTTP\Book\DTO\BookDTOFactory;
-use VintorezzZ\BackendPhpLearning\UI\HTTP\Auth\Controllers\AuthController;
-use VintorezzZ\BackendPhpLearning\UI\HTTP\UserProfile\Controllers\UserProfileController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\User\UserProfile\Controllers\UserProfileCreateController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\User\UserProfile\Controllers\UserProfileGetByUserIdController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\User\UserProfile\Controllers\UserProfileUpdateEmailController;
+use VintorezzZ\BackendPhpLearning\UI\HTTP\User\UserProfile\Controllers\UserProfileUpdateUsernameController;
 
 //header('Content-Type: application/json');
 session_start();
@@ -79,61 +86,81 @@ class HttpApplication
             $mySqlBookRepository = new MySqlBookRepository;
             $saveBooksUseCase = new SaveBooksListUseCase($mySqlBookRepository);
             $saveBooksController = new SaveBooksController($saveBooksUseCase);
-            return $saveBooksController->execute($request);
+            return $saveBooksController->save($request);
         }
 
         if (str_contains($path, 'auth/login')) {
-            $authController = $this->createAuthUserController();
-            return $authController->login($request);
+            $mySqlUserRepository = new MySqlUserRepository();
+            $userGetByLoginUseCase = new UserGetByLoginUseCase($mySqlUserRepository);
+            $authorizeUseCase = new AuthAuthorizeUseCase();
+            $authAuthorizeController = new AuthAuthorizeController($authorizeUseCase, $userGetByLoginUseCase);
+            return $authAuthorizeController->login($request);
         }
 
         if (str_contains($path, 'auth/register')) {
-            $profileController = $this->CreateUserProfileController();
-            $registerProfileDataValidationResult = $profileController->validateRegisterProfileData($request);
+            $mySqlUserRepository = new MySqlUserRepository();
+            $getUserByLoginUseCase = new UserGetByLoginUseCase($mySqlUserRepository);
+            $checkUserExistsUseCase = new UserExistsCheckUseCase($mySqlUserRepository);
+            $registerUseCase = new AuthRegisterUseCase($mySqlUserRepository);
+            $authorizeUseCase = new AuthAuthorizeUseCase();
+            $registerUserController = new AuthRegisterController($registerUseCase, $checkUserExistsUseCase, $getUserByLoginUseCase, $authorizeUseCase);
+
+            $registerProfileDataValidationResult = UserDataValidator::validateRegisterProfileData($request);
 
             if ($registerProfileDataValidationResult['error'] !== 0)
                 return json_encode(['result' => $registerProfileDataValidationResult]);
 
-            $authController = $this->createAuthUserController();
-            $authResult = $authController->register($request);
+            $registerResult = $registerUserController->register($request);
 
-            if ($authResult['error'] !== 0)
-                return json_encode(['result' => $authResult]);
+            if ($registerResult['error'] !== 0)
+                return json_encode(['result' => $registerResult]);
 
-            $profileControllerResult = $profileController->createUserProfile($authResult['userId'], $request);
-
-            return $profileControllerResult;
+            $mysSqlUserProfileRepository = new MySqlUserProfileRepository;
+            $userProfileCreateUseCase = new UserProfileCreateUseCase($mysSqlUserProfileRepository);
+            $userProfileCreateController = new UserProfileCreateController($userProfileCreateUseCase);
+            return $userProfileCreateController->createUserProfile($registerResult['userId'], $request);
         }
 
         if (str_contains($path, 'auth/logout')) {
-            $authController = $this->createAuthUserController();
-            return $authController->logout();
+            $logoutUseCase = new AuthLogoutUseCase();
+            $logoutController = new AuthLogoutController($logoutUseCase);
+            return $logoutController->logout();
         }
 
         if (str_contains($path, 'auth/delete')) {
-            $authController = $this->createAuthUserController();
-            return $authController->deleteUser($request);
+            $mySqlUserRepository = new MySqlUserRepository();
+            $authLogoutUseCase = new AuthLogoutUseCase();
+            $userGetByLoginUseCase = new UserGetByLoginUseCase($mySqlUserRepository);
+            $userDeleteUseCase = new UserDeleteUseCase($mySqlUserRepository);
+            $deleteUserController = new AuthDeleteUserController($userDeleteUseCase, $userGetByLoginUseCase, $authLogoutUseCase);
+            return $deleteUserController->deleteUser();
         }
 
         if (str_contains($path, 'auth/checkSession')) {
-            $authController = $this->createAuthUserController();
-            return $authController->checkSession();
+            $authCheckAuthorizedUseCase = new AuthCheckAuthorizedUseCase();
+            $authCheckAuthorizedController = new AuthCheckAuthorizedController($authCheckAuthorizedUseCase);
+            return $authCheckAuthorizedController->checkSession();
         }
 
         if (str_contains($path, 'profile/getProfile')) {
-            $profileController = $this->createUserProfileController();
-            return $profileController->getUserProfile();
+            $mysSqlUserProfileRepository = new MySqlUserProfileRepository;
+            $userProfileGetByUserIdUseCase = new UserProfileGetByUserIdUseCase($mysSqlUserProfileRepository);
+            $userProfileGetByUserIdController = new UserProfileGetByUserIdController($userProfileGetByUserIdUseCase);
+            return $userProfileGetByUserIdController->getUserProfile();
         }
 
-
         if (str_contains($path, 'profile/updateUsername')) {
-            $profileController = $this->createUserProfileController();
-            return $profileController->updateProfileUsername($request);
+            $mysSqlUserProfileRepository = new MySqlUserProfileRepository;
+            $userProfileUpdateUsernameUseCase = new UserProfileUpdateUsernameUseCase($mysSqlUserProfileRepository);
+            $userProfileUpdateUsernameController = new UserProfileUpdateUsernameController($userProfileUpdateUsernameUseCase);
+            return $userProfileUpdateUsernameController->updateProfileUsername($request);
         }
 
         if (str_contains($path, 'profile/updateEmail')) {
-            $profileController = $this->createUserProfileController();
-            return $profileController->updateProfileEmail($request);
+            $mysSqlUserProfileRepository = new MySqlUserProfileRepository;
+            $userProfileUpdateEmailUseCase = new UserProfileUpdateEmailUseCase($mysSqlUserProfileRepository);
+            $userProfileUpdateEmailController = new UserProfileUpdateEmailController($userProfileUpdateEmailUseCase);
+            return $userProfileUpdateEmailController->updateProfileEmail($request);
         }
 
         // Если ни одно условие не сработало — вернуть ошибку
@@ -144,45 +171,5 @@ class HttpApplication
         $response['message'] = "Route Not Found: $path";
 
         return json_encode(['result' => $response]);
-    }
-
-    private function createAuthUserController(): AuthController
-    {
-        $mySqlUserRepository = new MySqlUserRepository();
-        $getUserUseCase = new GetUserByLoginUseCase($mySqlUserRepository);
-        $deleteUserUseCase = new DeleteUserUseCase($mySqlUserRepository);
-        $checkUserExistsUseCase = new CheckUserExistsUseCase($mySqlUserRepository);
-        $registerUseCase = new RegisterUseCase($mySqlUserRepository);
-        $authorizeUserUseCase = new AuthorizeUseCase($mySqlUserRepository);
-        $checkAuthorizedUseCase = new CheckAuthorizedUseCase($mySqlUserRepository);
-        $logoutUserUseCase = new LogoutUseCase($mySqlUserRepository);
-        $authorization = new Authorization
-        (
-            $getUserUseCase,
-            $deleteUserUseCase,
-            $checkUserExistsUseCase,
-            $registerUseCase,
-            $authorizeUserUseCase,
-            $checkAuthorizedUseCase,
-            $logoutUserUseCase
-        );
-        return new AuthController($authorization);
-    }
-
-    public function CreateUserProfileController(): UserProfileController
-    {
-        $mysSqlUserProfileRepository = new MySqlUserProfileRepository;
-        $createUserProfileUseCase = new CreateUserProfileUseCase($mysSqlUserProfileRepository);
-        $getUserProfileUseCase = new GetUserProfileByUserIdUseCase($mysSqlUserProfileRepository);
-        $updateProfileUsernameUseCase = new UpdateProfileUsernameUseCase($mysSqlUserProfileRepository);
-        $updateProfileEmailUseCase = new UpdateProfileEmailUseCase($mysSqlUserProfileRepository);
-        $profileController = new  UserProfileController
-        (
-            $createUserProfileUseCase,
-            $getUserProfileUseCase,
-            $updateProfileUsernameUseCase,
-            $updateProfileEmailUseCase
-        );
-        return $profileController;
     }
 }

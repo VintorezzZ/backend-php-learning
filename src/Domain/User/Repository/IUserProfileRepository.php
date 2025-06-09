@@ -1,8 +1,8 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Domain\UserProfile\Repository;
+namespace VintorezzZ\BackendPhpLearning\Domain\User\Repository;
 
-use VintorezzZ\BackendPhpLearning\Domain\UserProfile\Entity\UserProfile;
+use VintorezzZ\BackendPhpLearning\Domain\User\ValueObject\UserProfile;
 
 interface IUserProfileRepository
 {

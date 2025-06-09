@@ -1,11 +1,10 @@
 <?php
 
-namespace VintorezzZ\BackendPhpLearning\Application\User;
+namespace VintorezzZ\BackendPhpLearning\Application\Auth;
 
-use VintorezzZ\BackendPhpLearning\Domain\User\Entity\User;
 use VintorezzZ\BackendPhpLearning\Domain\User\Repository\IUserRepository;
 
-class CheckUserExistsUseCase
+class AuthRegisterUseCase
 {
     private IUserRepository $userRepository;
 
@@ -14,8 +13,8 @@ class CheckUserExistsUseCase
         $this->userRepository = $userRepository;
     }
 
-    public function execute(string $login): ?User
+    public function execute(string $login, string $password): bool
     {
-        return $this->userRepository->existsUser($login);
+        return $this->userRepository->addUser($login, $password);
     }
 }
