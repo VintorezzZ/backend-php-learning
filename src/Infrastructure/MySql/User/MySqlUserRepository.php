@@ -102,7 +102,7 @@ class MySqlUserRepository extends BaseMySqlRepository implements IUserRepository
             CREATE TABLE users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 login VARCHAR(50) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
+                password VARCHAR(255) NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
         ";
             $pdo->exec($createTableSql);
