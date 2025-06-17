@@ -1,0 +1,340 @@
+openapi: 3.0.4
+info:
+  title: Учебный проект с книгами - OpenAPI 3.0
+  contact:
+    email: sergeevmisha16@gmail.com
+  version: 1.0.0
+servers:
+  - url: https://localhost:80/index.php
+    description: dev server
+paths:
+  /getBooks:
+    get:
+      tags:
+        - books
+      summary: Get saved books list.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Books'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /saveBooks:
+    post:
+      tags:
+        - books
+      summary: Save books array.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Books'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Logs user into the system.
+      parameters:
+        - name: login
+          in: query
+          description: The user login
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"          
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Logs out current logged in user session.          
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"          
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register user.
+      parameters:
+        - name: login
+          in: query
+          description: The user login
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: false
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: The user name
+          required: false
+          schema:
+            type: string
+        - name: email
+          in: query
+          description: The user email
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  description: users login.
+                  type: string
+                password:
+                  description: users password.
+                  type: string  
+                username:
+                  description: users name.
+                  type: string
+                email:
+                  description: users email.
+                  type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"              
+  /auth/delete:
+    delete:
+      tags:
+      - auth
+      summary: deletes current logged user.
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"   
+  /auth/checkSession:
+    get:
+      tags:
+        - auth
+      summary: Checks if user logged in.
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"                 
+  /profile/getProfile:
+    get:
+      tags:
+        - profile
+      summary: gets the current logged user profile.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /profile/updateUsername:
+    post:
+      tags:
+        - profile
+      summary: Updates a users name.
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: Updated name of user
+                  type: string
+              required:
+                - username
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"          
+  /profile/updateEmail:
+    post:
+      tags:
+        - profile
+      summary: Updates a users email.
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: Updated email of user
+                  type: string
+              required:
+                - email
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"          
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        title:
+          type: string
+          example: Евгений Онегин
+        author:
+          type: string
+          example: Пушкин А.С.
+    Books:
+      type: array
+      items:
+        $ref: "#/components/schemas/Book"
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: Misha
+        email:
+          type: string
+          example: example@gmail.com  
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message

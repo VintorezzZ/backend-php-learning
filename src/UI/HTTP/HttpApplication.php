@@ -51,6 +51,7 @@ class HttpApplication
         $request = new Request($_SERVER['REQUEST_METHOD'], getallheaders(), $input, $_GET);
 
         // Проверяем, является ли отправитель запроса валидным
+        //header("Access-Control-Allow-Origin: *");
         if (isset($server['HTTP_ORIGIN'])) {
             $originHeader = $server['HTTP_ORIGIN'];
             $parsedUrl = parse_url($originHeader);
@@ -59,7 +60,7 @@ class HttpApplication
             if (in_array($host, $this->allowedOrigins)) {
                 header("Access-Control-Allow-Origin: $originHeader");
                 header('Access-Control-Allow-Credentials: true');
-                header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+                header('Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE');
                 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
                 if ($server['REQUEST_METHOD'] === 'OPTIONS') {
